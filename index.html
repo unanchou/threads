@@ -501,13 +501,7 @@ select{
 #cards.v-small .cbody{padding:10px 12px 12px;}
 #cards.v-small .cdesc{font-size:13px;-webkit-line-clamp:2;display:-webkit-box;-webkit-box-orient:vertical;overflow:hidden;}
 #cards.v-small .ctags,#cards.v-small .cacts,#cards.v-small .tstrip{display:none;}
-#cards.v-list{display:flex;flex-direction:column;gap:12px;}
-#cards.v-list .card{display:grid;grid-template-columns:96px 1fr;border-radius:14px;}
-#cards.v-list .cimg-wrap{border-radius:14px 0 0 14px;overflow:hidden;}
-#cards.v-list .cimg{width:100%;height:100%;min-height:88px;object-fit:cover;display:block;}
-#cards.v-list .cph{min-height:88px;padding:0;aspect-ratio:unset;font-size:34px;}
-#cards.v-list .cbody{padding:14px 16px;display:flex;flex-direction:column;justify-content:center;}
-#cards.v-list .tstrip{display:none;}
+/* old v-list removed */
 
 /* ── CARD ── */
 .card{
@@ -1381,7 +1375,7 @@ mark{background:var(--rose-dim);color:var(--rose);border-radius:4px;padding:1px 
       </div>
     </div>
   </div>
-  <div id="cards" class="v-large"></div>
+  <div id="cards" class="cards masonry"></div>
 </main>
 </div>
 
@@ -1895,6 +1889,7 @@ async function _applyOGImage(imgUrl, postId){
   const idx=posts.findIndex(p=>p.id===postId);
   if(idx<0)return;
   posts[idx].media=[{kind:'image',url:imgUrl}];
+  posts[idx]._ogUrl=imgUrl; // 記住 OG 圖 URL 供之後快拍用
   save();
   // 更新卡片封面
   const wrap=document.querySelector(`[data-id="${postId}"] .cimg-wrap`);
@@ -1905,66 +1900,73 @@ async function _applyOGImage(imgUrl, postId){
     wrap.innerHTML=`<img class="cimg" src="${imgUrl}" loading="lazy" onerror="this.parentElement.innerHTML='<div class=cph>📌</div>'">`
       +`<span class="badge ${bcls}">${ty.emoji} ${blbl}</span>`;
   }
-  // 自動存快拍
+  // 自動嘗試轉 base64 存為快拍（背景靜默執行）
   if(!(posts[idx].snapshots||[]).length){
-    urlToBase64(imgUrl).then(b64=>{
-      if(!b64)return;
-      const i2=posts.findIndex(p=>p.id===postId);
-      if(i2<0||(posts[i2].snapshots||[]).length)return;
-      posts[i2].snapshots=[b64];posts[i2].snapshot=b64;
-      save();
-      toast('📷 封面圖已自動備份為快拍');
-    }).catch(()=>{});
+    tryAutoSnapshot(imgUrl, postId);
   }
 }
 
-// 把圖片 URL 轉 base64 — 多重 proxy fallback 應對 Threads CDN CORS
+// 嘗試把圖片 URL 轉成 base64 快拍
+// Threads CDN 圖通常無法直接 fetch（CORS），但可以試試
+async function tryAutoSnapshot(imgUrl, postId){
+  const b64 = await urlToBase64(imgUrl);
+  if(!b64) return;
+  const i2=posts.findIndex(p=>p.id===postId);
+  if(i2<0||(posts[i2].snapshots||[]).length) return;
+  posts[i2].snapshots=[b64];
+  posts[i2].snapshot=b64;
+  save();
+  // 更新卡片 snap dot
+  const dot=document.querySelector(`[data-id="${postId}"] .snap-dot`);
+  if(dot) dot.style.display='flex';
+  toast('📷 縮圖已自動存為快拍！');
+  console.log('[Familyz] auto snapshot saved');
+}
+
+// 把圖片 URL 轉 base64
+// 優先：直接 fetch（如果 CDN 允許 CORS）
+// 備用：crossOrigin img + canvas（可能被 tainted 擋住）
 async function urlToBase64(imgUrl){
-  // 方法一：直接 fetch（Threads CDN scontent 允許 CORS）
+  // 方法一：直接 fetch
   try{
-    const tout=new Promise((_,rej)=>setTimeout(()=>rej(new Error('timeout')),12000));
+    const tout=new Promise((_,rej)=>setTimeout(()=>rej(new Error('timeout')),10000));
     const r=await Promise.race([fetch(imgUrl),tout]);
     if(r.ok){
       const blob=await r.blob();
-      if(blob.type.startsWith('image/')||blob.size>1000){
+      if(blob.size>500){
         const b64=await blobToBase64(blob);
         if(b64&&b64.startsWith('data:image')){
-          console.log('[Familyz] urlToBase64 direct fetch ok, size:', blob.size);
+          console.log('[Familyz] urlToBase64 fetch ok');
           return b64;
         }
       }
     }
-  }catch(e){console.log('[Familyz] urlToBase64 direct fetch fail:', e.message);}
+  }catch(e){console.log('[Familyz] urlToBase64 fetch fail:', e.message);}
 
-  // 方法二：canvas + img element（不需要 CORS 但 toDataURL 可能被 taint 擋住）
+  // 方法二：img + canvas（不帶 crossOrigin，讓圖片能顯示，但 toDataURL 可能 tainted）
   try{
-    return await imgElementToBase64(imgUrl);
+    return await new Promise((res,rej)=>{
+      const img=new Image();
+      // 不設 crossOrigin，讓圖片正常載入
+      img.onload=()=>{
+        try{
+          const MAX=1200;
+          let w=img.naturalWidth,h=img.naturalHeight;
+          if(!w||!h){rej(new Error('no size'));return;}
+          if(w>MAX){h=Math.round(h*MAX/w);w=MAX;}
+          const c=document.createElement('canvas');
+          c.width=w;c.height=h;
+          c.getContext('2d').drawImage(img,0,0,w,h);
+          res(c.toDataURL('image/jpeg',0.82)); // 若 tainted 這裡會拋錯
+        }catch(e){rej(e);}
+      };
+      img.onerror=()=>rej(new Error('img load fail'));
+      img.src=imgUrl;
+      setTimeout(()=>rej(new Error('timeout')),10000);
+    });
   }catch(e){console.log('[Familyz] urlToBase64 canvas fail:', e.message);}
 
-  console.log('[Familyz] urlToBase64 all methods failed');
   return null;
-}
-
-// canvas 法
-function imgElementToBase64(imgUrl){
-  return new Promise((res,rej)=>{
-    const img=new Image();
-    img.crossOrigin='anonymous';
-    img.onload=()=>{
-      try{
-        const MAX=1200;
-        let w=img.naturalWidth,h=img.naturalHeight;
-        if(w>MAX){h=Math.round(h*MAX/w);w=MAX;}
-        const c=document.createElement('canvas');
-        c.width=w;c.height=h;
-        c.getContext('2d').drawImage(img,0,0,w,h);
-        res(c.toDataURL('image/jpeg',0.82));
-      }catch(e){rej(e);}
-    };
-    img.onerror=rej;
-    img.src=imgUrl;
-    setTimeout(()=>rej(new Error('timeout')),10000);
-  });
 }
 
 async function blobToBase64(blob){
@@ -2101,10 +2103,33 @@ function renderDrawerSnaps(container, p){
 
   // 標題列
   const hdr=document.createElement('div');
-  hdr.style.cssText='display:flex;align-items:center;gap:8px;margin-bottom:10px';
+  hdr.style.cssText='display:flex;align-items:center;gap:8px;margin-bottom:10px;flex-wrap:wrap';
   const lbl=document.createElement('div');lbl.className='d-label';lbl.style.marginBottom='0';
   lbl.textContent=`📸 截圖快拍（${snaps.length}/10）`;
   hdr.appendChild(lbl);
+  // 如果有 OG 圖且快拍是空的，顯示「從縮圖存檔」按鈕
+  const ogUrl=p._ogUrl||(p.media||[]).find(m=>m.kind==='image')?.url;
+  if(ogUrl&&snaps.length===0){
+    const fromOG=document.createElement('button');
+    fromOG.className='d-snap-del';
+    fromOG.textContent='⬇ 從縮圖存快拍';
+    fromOG.style.cssText='background:var(--violet-dim);color:var(--violet);border-color:var(--violet-dim)';
+    fromOG.onclick=async()=>{
+      fromOG.textContent='轉換中…';fromOG.disabled=true;
+      const b64=await urlToBase64(ogUrl);
+      if(b64){
+        const i2=posts.findIndex(x=>x.id===p.id);
+        if(i2>=0){
+          posts[i2].snapshots=[b64];posts[i2].snapshot=b64;
+          save();openDrawer(p.id);toast('📷 縮圖已存為快拍！');
+        }
+      } else {
+        fromOG.textContent='⬇ 從縮圖存快拍';fromOG.disabled=false;
+        toast('⚠ 無法自動轉換，請手動截圖貼上');
+      }
+    };
+    hdr.appendChild(fromOG);
+  }
   wrap.appendChild(hdr);
 
   // 圖片 grid
@@ -2509,7 +2534,7 @@ function toggleStar(id,e){
   // update header stat
   $('sc').textContent=posts.filter(p=>p.starred).length;
 }
-function setView(v){vw=v;const base=v==='list'?'cards view-list':'cards masonry';$('cards').className=base+(selecting?' selecting':'');['large','small','list'].forEach(x=>$('vb-'+x).classList.toggle('on',x===v));render();}
+function setView(v){vw=v;let base;if(v==='list')base='cards view-list';else if(v==='small')base='cards masonry v-small';else base='cards masonry v-large';$('cards').className=base+(selecting?' selecting':'');['large','small','list'].forEach(x=>$('vb-'+x).classList.toggle('on',x===v));render();}
 
 // ── MOBILE TABS ══
 function mobileTab(tab){
@@ -2556,7 +2581,7 @@ function render(){
     });
   }
   $('rinfo').innerHTML=`共 <strong>${data.length}</strong> 筆`;
-  const cardsBase=vw==='list'?'cards view-list':'cards masonry';$('cards').className=cardsBase+(selecting?' selecting':'');
+  let cardsBase;if(vw==='list')cardsBase='cards view-list';else if(vw==='small')cardsBase='cards masonry v-small';else cardsBase='cards masonry v-large';$('cards').className=cardsBase+(selecting?' selecting':'');
   const bmap={image:'b-img',video:'b-vid',mixed:'b-mix',text:'b-txt'};
   const lmap={image:'IMAGE',video:'VIDEO',mixed:'MIXED',text:'TEXT'};
   if(!data.length){
