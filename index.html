@@ -117,29 +117,35 @@ function rebindConfirmBtns(){
 
 /* ── DARK THEME ── */
 [data-theme="dark"] {
-  --bg:#100c18;
-  --bg2:#18122a;
-  --white:#1e1630;
-  --card-bg:#1e1630;
-  --ink:#ede8f8;
-  --ink2:#a090c0;
-  --ink3:#60507a;
-  --ink4:#342848;
-  --border:#2e2248;
-  --border2:#251d3e;
-  --shadow-sm:0 1px 3px rgba(0,0,0,.3);
-  --shadow:0 2px 8px rgba(0,0,0,.35),0 8px 24px rgba(0,0,0,.25);
-  --shadow-lg:0 4px 16px rgba(0,0,0,.4),0 16px 48px rgba(0,0,0,.3);
-  --shadow-float:0 8px 32px rgba(0,0,0,.5);
-  --grad-main:linear-gradient(135deg,#a04870 0%,#5840a0 100%);
-  --grad-soft:linear-gradient(135deg,rgba(160,72,112,.15),rgba(88,64,160,.15));
-  --grad-card:linear-gradient(160deg,#1e1630 0%,#18122a 100%);
-  --chip-on:linear-gradient(135deg,#2a1838,#1c1440);
-  --header-bg:rgba(16,12,24,.97);
-  --sidebar-bg:rgba(16,12,24,.9);
-  --overlay-bg:rgba(4,2,10,.72);
-  --blob1:rgba(160,72,112,.09);
-  --blob2:rgba(88,64,160,.08);
+  --bg:#0a0f1a;
+  --bg2:#111827;
+  --white:#162032;
+  --card-bg:#162032;
+  --ink:#dde8f5;
+  --ink2:#7aa0c0;
+  --ink3:#3d5570;
+  --ink4:#1e3048;
+  --border:#1e3550;
+  --border2:#192d45;
+  --shadow-sm:0 1px 3px rgba(0,0,0,.4);
+  --shadow:0 2px 8px rgba(0,0,0,.4),0 8px 24px rgba(0,0,0,.3);
+  --shadow-lg:0 4px 16px rgba(0,0,0,.5),0 16px 48px rgba(0,0,0,.4);
+  --shadow-float:0 8px 32px rgba(0,0,0,.6);
+  --grad-main:linear-gradient(135deg,#2a6ab0 0%,#1a3f7a 100%);
+  --grad-soft:linear-gradient(135deg,rgba(42,106,176,.18),rgba(26,63,122,.18));
+  --grad-card:linear-gradient(160deg,#162032 0%,#111827 100%);
+  --chip-on:linear-gradient(135deg,#0f2440,#0a1a30);
+  --header-bg:rgba(10,15,26,.97);
+  --sidebar-bg:rgba(10,15,26,.92);
+  --overlay-bg:rgba(2,5,12,.75);
+  --blob1:rgba(42,106,176,.1);
+  --blob2:rgba(26,63,122,.08);
+  --rose:#4a90d0;
+  --rose-light:#0f2440;
+  --rose-dim:rgba(74,144,208,.15);
+  --violet:#2a6ab0;
+  --violet-light:#0f2440;
+  --violet-dim:rgba(42,106,176,.15);
 }
 
 /* ── BASE ── */
@@ -181,7 +187,7 @@ header{
   -webkit-backdrop-filter:blur(20px) saturate(180%);
   transition:background .35s,border-color .35s;
 }
-.header-inner{width:100%;max-width:var(--max-w);margin:0 auto;display:flex;align-items:center;justify-content:space-between;gap:16px;}
+.header-inner{width:100%;max-width:var(--max-w);margin:0 auto;display:flex;align-items:center;justify-content:space-between;gap:12px;}
 
 /* Logo — DM Serif Display signature */
 .logo{
@@ -255,17 +261,23 @@ header{
 
 /* ── FOLDER BAR ── */
 .folder-bar{
-  background:var(--header-bg);
+  background:var(--bg);
   border-bottom:1px solid var(--border);
-  padding:0 24px;height:48px;
+  padding:0 24px;height:54px;
   display:flex;align-items:center;justify-content:center;
   overflow-x:auto;position:sticky;top:62px;z-index:99;
   scrollbar-width:none;
   transition:background .35s,border-color .35s;
-  backdrop-filter:blur(12px);
 }
-.folder-bar-inner{width:100%;max-width:var(--max-w);display:flex;align-items:center;gap:5px;}
+.folder-bar-inner{width:100%;max-width:var(--max-w);display:flex;align-items:center;gap:8px;padding:8px 0;}
 .folder-bar::-webkit-scrollbar{display:none;}
+.ftab{padding:5px 14px;border-radius:8px;font-size:12px;font-weight:700;cursor:pointer;border:1.5px solid var(--border);background:transparent;color:var(--ink2);white-space:nowrap;transition:all .15s;display:flex;align-items:center;gap:5px;margin:2px 0;}
+.ftab:hover{border-color:var(--rose);color:var(--rose);}
+.ftab.on{background:var(--grad-main);color:#fff;border-color:transparent;box-shadow:0 3px 10px rgba(180,100,160,.25);}
+.ftab-add{background:transparent;border:1.5px dashed var(--border);color:var(--ink3);font-size:16px;width:28px;height:28px;border-radius:8px;padding:0;display:flex;align-items:center;justify-content:center;flex-shrink:0;cursor:pointer;transition:all .15s;margin:2px 0;}
+.ftab-add:hover{border-color:var(--rose);color:var(--rose);}
+.ftab-del{font-size:10px;opacity:.7;margin-left:2px;}
+.ftab-del:hover{opacity:1;}
 
 
 }
@@ -277,34 +289,6 @@ header{
 
   .hdr-search{max-width:200px;}
 }
-
-.ftab{
-  padding:6px 16px;border-radius:10px;
-  font-size:13px;font-weight:500;
-  cursor:pointer;
-  border:1px solid var(--border);
-  background:transparent;
-  color:var(--ink2);
-  white-space:nowrap;
-  transition:all .18s;
-  display:flex;align-items:center;gap:5px;
-}
-.ftab:hover{background:var(--bg2);color:var(--ink);}
-.ftab.on{
-  background:var(--grad-main);color:#fff;
-  border-color:transparent;
-  box-shadow:0 2px 12px rgba(232,99,126,.3);
-  font-weight:600;
-}
-.ftab-add{
-  background:transparent;border-style:dashed;
-  color:var(--ink3);font-size:18px;
-  width:30px;height:30px;border-radius:8px;
-  padding:0;display:flex;align-items:center;justify-content:center;flex-shrink:0;
-}
-.ftab-add:hover{border-color:var(--rose);color:var(--rose);}
-.ftab-del{font-size:10px;opacity:.6;margin-left:2px;}
-.ftab-del:hover{opacity:1;}
 
 /* ── BATCH BAR ── */
 .batch-bar{
@@ -949,12 +933,12 @@ mark{background:var(--rose-dim);color:var(--rose);border-radius:4px;padding:1px 
 .theme-switcher{display:flex;gap:4px;align-items:center;}
 .theme-dot{width:15px;height:15px;border-radius:50%;cursor:pointer;border:2px solid transparent;transition:all .2s;flex-shrink:0;}
 .theme-dot:hover{transform:scale(1.3);}
-.theme-dot.active{border-color:var(--ink);transform:scale(1.18);}
+.theme-dot.active{border-color:transparent;transform:scale(1.18);box-shadow:0 0 0 2px rgba(255,255,255,.7),0 0 4px 1px rgba(255,255,255,.3);}
 .theme-dot-pink{background:linear-gradient(135deg,#f5d5e2,#ddd0f5);}
 .theme-dot-blue{background:linear-gradient(135deg,#a8c8e8,#7aaac8);}
 .theme-dot-teal{background:linear-gradient(135deg,#90ccbe,#60a898);}
 .theme-dot-sakura{background:linear-gradient(135deg,#ffffff,#f0f0f0);border-color:#ccc !important;}
-.theme-dot-dark{background:linear-gradient(135deg,#243448,#100c18);}
+.theme-dot-dark{background:linear-gradient(135deg,#1a3a5c,#0d1f35);}
 .sync-bar{display:flex;align-items:center;gap:7px;}
 .sync-btn{
   padding:6px 14px;border-radius:20px;font-size:12px;font-weight:600;
@@ -1088,87 +1072,8 @@ mark{background:var(--rose-dim);color:var(--rose);border-radius:4px;padding:1px 
   .sidebar{position:static;height:auto;border-right:none;border-bottom:1px solid var(--border);}
   .hstats{display:none;}
 }
-@media(max-width:640px){
-  /* === 基礎重置 === */
-  html, body { overflow-x:hidden; max-width:100%; }
-  
-  /* === Header === */
-  header { padding:0 12px; overflow:hidden; }
-  .header-inner { position:relative; gap:8px; }
-  .logo { position:absolute; left:50%; transform:translateX(-50%); pointer-events:none; }
-  .sidebar-toggle { display:none; }
-  .burger-btn { display:flex; }
-  .hdr-search { max-width:180px; flex:1; }
-  .hdr-btns, .sync-bar, .hstats { display:none; }
-  .quick-badge { display:none !important; }
 
-  /* === App layout === */
-  .app {
-    display:block !important;
-    grid-template-columns:1fr !important;
-    width:100%;
-    overflow-x:hidden;
-    min-height:calc(100vh - 62px - 64px - env(safe-area-inset-bottom,0px));
-  }
 
-  /* === Sidebar → 新增頁面（fixed 全屏）=== */
-  .sidebar { display:none; }
-  .sidebar.mobile-show {
-    display:flex !important;
-    flex-direction:column;
-    gap:16px;
-    position:fixed;
-    top:62px; left:0; right:0;
-    bottom:calc(64px + env(safe-area-inset-bottom,0px));
-    overflow-y:auto;
-    overflow-x:hidden;
-    padding:20px 16px 32px;
-    box-sizing:border-box;
-    background:var(--bg);
-    z-index:130;
-    width:100%;
-  }
-  .sidebar.mobile-show .form-collapse-btn { display:none; }
-  .sidebar.mobile-show .form-extra.collapsed {
-    max-height:none !important;
-    opacity:1 !important;
-    pointer-events:auto !important;
-  }
-
-  /* === Main === */
-  .main { display:none; }
-  .main.mobile-show { display:block; }
-
-  /* === Bottom nav === */
-  .mobile-nav { display:flex; }
-
-  /* === 日期範圍 === */
-  .date-range-row { flex-direction:column; gap:6px; }
-  .date-range-row input { width:100% !important; }
-
-  /* === 卡片 === */
-  #cards.v-large { grid-template-columns:repeat(2,1fr); }
-  #cards.v-small { grid-template-columns:repeat(2,1fr); }
-
-  /* === 清單模式 === */
-  .cards.view-list .list-actions { display:none; }
-  .cards.view-list .card > div[style*="grid-template-columns"] {
-    grid-template-columns:72px 1fr !important;
-  }
-  .list-type-col { padding:0 8px; }
-  .list-main-col { padding:12px 12px 12px 8px; }
-  .list-desc { font-size:13px; }
-  .cards.view-list .card::after {
-    content:'';position:absolute;right:12px;top:50%;transform:translateY(-50%);
-    width:6px;height:6px;border-right:2px solid var(--ink4);border-top:2px solid var(--ink4);
-    rotate:45deg;
-  }
-
-  /* === 기타 === */
-  .batch-bar { top:62px; position:fixed; width:100%; left:0; right:0; }
-  .drawer { width:100%; right:-100%; }
-  .toast { bottom:calc(82px + env(safe-area-inset-bottom,0px)); left:16px; right:16px; max-width:none; text-align:center; }
-}
 
 /* ── SNAP DOT on card ── */
 .snap-dot{
@@ -1189,6 +1094,37 @@ mark{background:var(--rose-dim);color:var(--rose);border-radius:4px;padding:1px 
 .selecting .snap-dot{display:none;}
 
 
+
+/* ── MOBILE HAMBURGER MENU ── */
+.burger-btn{
+  display:none;background:none;border:none;cursor:pointer;
+  width:36px;height:36px;border-radius:10px;
+  font-size:20px;color:var(--ink2);
+  align-items:center;justify-content:center;
+  transition:background .15s;flex-shrink:0;
+}
+.burger-btn:hover{background:var(--rose-light);}
+.mobile-menu{
+  display:none;position:fixed;inset:0;z-index:300;
+}
+.mobile-menu.open{display:block;}
+.mobile-menu-overlay{
+  position:absolute;inset:0;background:rgba(0,0,0,.3);
+}
+.mobile-menu-panel{
+  position:absolute;top:0;right:0;bottom:0;width:78%;max-width:300px;
+  background:var(--bg);display:flex;flex-direction:column;overflow-y:auto;
+  transform:translateX(100%);transition:transform .28s cubic-bezier(.4,0,.2,1);
+}
+.mobile-menu.open .mobile-menu-panel{transform:translateX(0);}
+.mobile-menu-header{
+  padding:20px 20px 16px;display:flex;align-items:center;
+  justify-content:space-between;border-bottom:1px solid var(--border);
+}
+.mobile-menu-close{background:none;border:none;font-size:22px;cursor:pointer;color:var(--ink3);padding:4px;}
+.mobile-menu-section{padding:16px 20px;border-bottom:1px solid var(--border2);}
+.mobile-menu-section h4{font-size:11px;font-weight:700;color:var(--ink3);letter-spacing:.5px;text-transform:uppercase;margin:0 0 12px;}
+.mobile-star-badge{font-size:14px;color:var(--ink2);display:flex;align-items:center;gap:6px;}
 /* ── CUSTOM CONFIRM MODAL ── */
 .cfrm-overlay{position:fixed;inset:0;background:var(--overlay-bg);backdrop-filter:blur(8px);z-index:600;display:flex;align-items:center;justify-content:center;padding:20px;animation:fadeIn .15s ease;}
 .cfrm-box{background:var(--bg);border:1px solid var(--border);border-radius:20px;padding:26px 24px 20px;max-width:340px;width:100%;box-shadow:var(--shadow-lg);animation:popIn .18s ease;}
@@ -1371,21 +1307,76 @@ mark{background:var(--rose-dim);color:var(--rose);border-radius:4px;padding:1px 
 #f-types .tyc{flex:1;}
 #f-types .tyc label{width:100%;justify-content:center;padding:6px 4px;}
 .form-extra.collapsed{max-height:0;opacity:0;pointer-events:none;}
+@media(max-width:640px){
+  .app{grid-template-columns:1fr !important;}
+}
+@media(max-width:640px){
+  /* reset */
+  html,body{overflow-x:hidden;}
+  
+  /* header */
+  header{padding:0 14px;}
+  .sidebar-toggle{display:none;}
+  .burger-btn{display:flex !important;flex-shrink:0;}
+  .hdr-search{flex:1;max-width:none !important;min-width:0;}
+  .hdr-search input{width:100%;}
+  .hdr-right{display:none !important;}
+  .quick-badge{display:none !important;}
+  .logo{display:none;}
+
+  /* app */
+  .app{display:block !important;grid-template-columns:unset !important;width:100% !important;max-width:100vw;}
+
+  /* 新增頁 */
+  .sidebar{display:none;}
+  .sidebar.mobile-show{
+    display:flex !important;flex-direction:column;gap:16px;
+    width:100%;box-sizing:border-box;
+    overflow-x:hidden;
+    padding:20px 16px 32px;
+    background:var(--bg);
+    min-height:calc(100vh - 62px - 64px);
+  }
+  .sidebar.mobile-show .form-collapse-btn{display:none;}
+  .sidebar.mobile-show #form-extra{max-height:none !important;opacity:1 !important;pointer-events:auto !important;}
+
+  /* 收藏頁 */
+  .main{display:none;}
+  .main.mobile-show{display:block;}
+
+  /* 底部導覽 */
+  .mobile-nav{display:flex;}
+  .batch-bar{top:62px;position:fixed;width:100%;left:0;right:0;}
+  .toast{bottom:calc(82px + env(safe-area-inset-bottom,0px));left:16px;right:16px;max-width:none;text-align:center;}
+
+  /* 卡片 */
+  #cards.v-large,#cards.v-small{grid-template-columns:repeat(2,1fr);}
+  .drawer{width:100%;right:-100%;}
+
+  /* 清單模式 */
+  .cards.view-list .list-actions{display:none;}
+  .list-type-col{padding:0 8px;}
+  .list-main-col{padding:12px 8px;}
+  .list-desc{font-size:13px;}
+
+  /* 日期範圍 */
+  .date-range-row{flex-wrap:wrap;}
+  .date-range-row input{flex:1;min-width:120px;}
+}
+
 </style>
 <body>
 
 <header>
  <div class="header-inner">
-  <div style="display:flex;align-items:center;gap:10px;flex-shrink:0;">
-    <button class="sidebar-toggle" onclick="toggleSidebar()" id="sidebar-toggle-btn" title="收合側邊欄">◀</button>
-    <button class="burger-btn" onclick="openMobileMenu()" title="選單">☰</button>
-    <div class="logo"><span class="logo-star">✦</span>Familyz<span class="logo-star" style="font-size:10px">✦</span></div>
-  </div>
+  <button class="sidebar-toggle" onclick="toggleSidebar()" id="sidebar-toggle-btn" title="收合側邊欄">◀</button>
+  <button class="burger-btn" onclick="openMobileMenu()" title="選單">☰</button>
+  <div class="logo" style="flex-shrink:0"><span class="logo-star">✦</span>Familyz<span class="logo-star" style="font-size:10px">✦</span></div>
   <div class="hdr-search">
     <span class="hdr-search-ico">🔍</span>
     <input id="q" placeholder="搜尋…" oninput="render()">
   </div>
-  <div style="display:flex;align-items:center;gap:8px;flex-shrink:0;">
+  <div class="hdr-right" style="display:flex;align-items:center;gap:8px;flex-shrink:0;">
     <div class="hstats">
       <div class="hstat">⭐ <span id="sc">0</span></div>
       <span id="tc" style="display:none">0</span>
@@ -1416,7 +1407,7 @@ mark{background:var(--rose-dim);color:var(--rose);border-radius:4px;padding:1px 
  <div class="folder-bar-inner">
   <button class="ftab on" id="ftab-all" onclick="setFolder('all',this)">✦ 全部</button>
   <!-- dynamic tabs -->
-  <button class="ftab ftab-add" onclick="addFolder()" title="新增收藏夾">＋</button>
+  <button class="ftab-add" onclick="addFolder()" title="新增收藏夾">＋</button>
  </div>
 </div>
 
@@ -2904,6 +2895,8 @@ function setView(v){vw=v;let base;if(v==='list')base='cards view-list';else if(v
 // ── MOBILE TABS ══
 function mobileTab(tab){
   const sidebar=$('sidebar'),main=$('main-view');
+  const appEl=$('app');
+  if(appEl&&window.innerWidth<=640){appEl.style.cssText='display:block;width:100%;max-width:100%;';}
   document.querySelectorAll('.mnav-btn').forEach(b=>b.classList.remove('on'));
   if(tab==='add'){
     sidebar.classList.add('mobile-show');
@@ -2911,6 +2904,9 @@ function mobileTab(tab){
     const fb=$('folder-bar');if(fb)fb.style.display='none';
     $('mnav-add').classList.add('on');
     document.body.style.overflow='hidden';
+    // 手機版強制展開 form
+    const fe=$('form-extra');if(fe)fe.classList.remove('collapsed');
+    const ft=$('form-toggle');if(ft)ft.classList.add('open');
   } else if(tab==='browse'||tab==='search'){
     sidebar.classList.remove('mobile-show');
     main.classList.add('mobile-show');
@@ -3294,9 +3290,14 @@ renderAll();
 initFormCollapse();
 gdInit(); // 嘗試自動登入 Google
 
-// 手機版預設顯示新增表單
+// 手機版
 if(window.innerWidth<=640){
-  mobileTab('add');
+  // 強制移除 grid，讓 app 變成單欄 block
+  const appEl=$('app');
+  if(appEl){
+    appEl.style.cssText='display:block;width:100%;max-width:100%;';
+  }
+  mobileTab('browse');
 } else {
   $('main-view').classList.add('mobile-show');
 }
