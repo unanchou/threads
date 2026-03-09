@@ -1905,6 +1905,7 @@ $('edit-modal').addEventListener('click',e=>{if(e.target===$('edit-modal'))close
 
 // ── DETAIL DRAWER ──
 function openDrawer(id){
+  try{
   const p=posts.find(x=>x.id===id);if(!p)return;
   drawerPostId=id;
   const fi=(p.media||[]).find(m=>m.kind==='image');
@@ -1974,10 +1975,12 @@ function openDrawer(id){
   document.body.style.overflow='hidden';
   const sb=$('drawer-star-btn');
   if(sb)sb.textContent=p.starred?'⭐':'☆';
+  }catch(err){console.error('[Familyz] openDrawer error:', err); $('d-body').innerHTML='<div style="padding:20px;color:red;font-size:13px">載入失敗：'+err.message+'</div>';}
 }
 
 // ── 多張快拍：渲染區塊 ──
 function renderDrawerSnaps(container, p){
+  try{
   const MAX=10;
   const snaps=p.snapshots||[];
   const wrap=document.createElement('div');wrap.className='d-field';wrap.id='d-snaps-wrap';
@@ -2028,6 +2031,7 @@ function renderDrawerSnaps(container, p){
   }
 
   container.appendChild(wrap);
+  }catch(e){console.error('[Familyz] renderDrawerSnaps error:',e);}
 }
 
 // 刪除指定 index 的快拍
@@ -2457,7 +2461,7 @@ function render(){
     const thumbs=vw!=='list'?(p.media||[]).filter(m=>m.kind==='image').slice(0,5).map(m=>`<img class="th" src="${m.url}" loading="lazy">`).join(''):'';
     const noteDot=p.note?'<div class="note-dot"></div>':'';
     const snapCount=(p.snapshots||[]).length;
-    const snapDot=snapCount>0?`<div class="snap-dot" title="${snapCount} 張快拍">📷${snapCount>1?'<span>'+snapCount+'</span>':''}</div>`:'';
+    const snapDot=snapCount>0?`<div class="snap-dot" title="${snapCount} 張快拍"><span style="font-size:12px">📷</span>${snapCount>1?'<b>'+snapCount+'</b>':''}</div>`:'';
     const starCls=p.starred?' starred':'';
     const starIco=p.starred?'⭐':'☆';
     const quickCls=p.isQuick?' is-quick':'';
