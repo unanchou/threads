@@ -2027,8 +2027,8 @@ function openDrawer(id){
   const ty=types.find(t=>t.id===p.media_type)||{name:p.media_type,emoji:'📌'};
   const body=$('d-body');
   if(!body){console.error('[Familyz] openDrawer: d-body not found!');return;}
-  console.log('[Familyz] openDrawer: body found, clearing...');
-  body.innerHTML='';
+  console.log('[Familyz] openDrawer: body found, id=', id, 'post=', p.url);
+  body.innerHTML='<div style="padding:12px;font-size:12px;color:var(--ink3)">載入中…</div>';
 
   function field(labelHTML, contentEl){
     const wrap=document.createElement('div');wrap.className='d-field';
@@ -2675,7 +2675,6 @@ function render(){
         <a class="curl" href="${p.url}" target="_blank" rel="noopener" onclick="event.stopPropagation()">↗ threads.net</a>
         ${thtml?`<div class="ctags">${thtml}</div>`:''}
       </div>
-      ${thumbs?`<div class="tstrip">${thumbs}</div>`:''}
     </div>`;
   }).join('');
   if(sort==='manual')initDrag();
