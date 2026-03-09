@@ -3000,9 +3000,10 @@ function renderAll(){
   $('tag-chips').innerHTML=
     (tagFilters.size>0?`<button class="chip" onclick="clearTags()" style="border-color:var(--purple2);color:var(--purple2)">✕ 清除</button>`:'')+
     tags.map(t=>`<button class="chip${tagFilters.has(t)?' on':''}" data-tag="${t}" onclick="toggleTag('${t}')">${t}</button>`).join('');
-  $('f-types').innerHTML=types.map(ty=>`<div class="tyc"><input type="radio" name="ftype" id="fty-${ty.id}" value="${ty.id}"><label for="fty-${ty.id}">${ty.emoji} ${ty.name}</label></div>`).join('');
+  $('f-types').innerHTML=types.map(ty=>`<div class="tyc"><input type="radio" name="ftype" id="fty-${ty.id}" value="${ty.id}"><label for="fty-${ty.id}" title="${ty.name}">${ty.emoji}</label></div>`).join('');
   $('f-tags').innerHTML=tags.map(t=>`<div class="tc"><input type="checkbox" id="ft-${t}"><label for="ft-${t}">${t}</label></div>`).join('');
   renderFolderBar();
+  renderFolderSelect();
   updateQuickBadge();
   render();
 }
