@@ -499,6 +499,9 @@ select{
 
 /* ── MASONRY & VIEWS ── */
 #cards.v-large{display:grid;grid-template-columns:repeat(4,1fr);gap:14px;}
+#cards.v-large .cimg-wrap{aspect-ratio:16/10;}
+#cards.v-large .cimg{width:100%;height:100%;object-fit:cover;position:absolute;top:0;left:0;}
+#cards.v-large .cph{position:absolute;inset:0;width:100%;height:100%;padding:0;display:flex;align-items:center;justify-content:center;}
 #cards.v-large .card{}
 #cards.v-small{display:grid;grid-template-columns:repeat(auto-fill,minmax(165px,1fr));gap:14px;}
 #cards.v-small .cph{aspect-ratio:1;padding:0;font-size:36px;}
@@ -2199,15 +2202,46 @@ function openDrawer(id){
   renderDrawerSnaps(body, p);
 
   console.log('[Familyz] openDrawer step 7: note');
-  // 私人備註
+  // 私人備註：顯示模式，點「編輯」才能修改
   const noteWrap=document.createElement('div');noteWrap.className='d-field';
-  const noteLbl=document.createElement('div');noteLbl.className='d-label';
+  const noteLblRow=document.createElement('div');
+  noteLblRow.style.cssText='display:flex;align-items:center;justify-content:space-between;margin-bottom:6px';
+  const noteLbl=document.createElement('div');noteLbl.className='d-label';noteLbl.style.marginBottom='0';
   noteLbl.innerHTML='私人備註 <span style="font-weight:400;font-size:10px;letter-spacing:0;color:var(--ink3)">（不顯示在卡片上）</span>';
+  // 編輯按鈕
+  const noteEditBtn=document.createElement('button');
+  noteEditBtn.style.cssText='background:none;border:1px solid var(--border);border-radius:7px;color:var(--ink3);font-size:11px;padding:2px 10px;cursor:pointer;font-family:inherit;';
+  noteEditBtn.textContent='✎ 編輯';
+  noteLblRow.appendChild(noteLbl);noteLblRow.appendChild(noteEditBtn);
+  noteWrap.appendChild(noteLblRow);
+  // 顯示區
+  const noteDisplay=document.createElement('div');
+  noteDisplay.id='note-display';
+  noteDisplay.style.cssText='font-size:13px;line-height:1.75;color:var(--ink);white-space:pre-wrap;min-height:20px;padding:2px 0';
+  noteDisplay.textContent=p.note||'';
+  if(!p.note){noteDisplay.style.color='var(--ink3)';noteDisplay.style.fontStyle='italic';noteDisplay.textContent='（尚無備註）';}
+  // 編輯區（預設隱藏）
+  const noteEdit=document.createElement('div');noteEdit.id='note-edit-area';noteEdit.style.display='none';
   const ta=document.createElement('textarea');ta.className='note-area';ta.id='note-area';
   ta.placeholder='只有你自己看得到…';ta.value=p.note||'';
+  ta.style.minHeight='80px';
+  // 自動高度
+  ta.addEventListener('input',()=>{ta.style.height='auto';ta.style.height=ta.scrollHeight+'px';});
   const nb=document.createElement('button');nb.className='note-save-btn';nb.textContent='儲存備註';
   nb.onclick=()=>saveNote(id);
-  noteWrap.appendChild(noteLbl);noteWrap.appendChild(ta);noteWrap.appendChild(nb);
+  noteEdit.appendChild(ta);noteEdit.appendChild(nb);
+  // 切換邏輯
+  noteEditBtn.onclick=()=>{
+    const isEditing=noteEdit.style.display!=='none';
+    if(isEditing){
+      noteEdit.style.display='none';noteDisplay.style.display='';noteEditBtn.textContent='✎ 編輯';
+    }else{
+      noteEdit.style.display='';noteDisplay.style.display='none';noteEditBtn.textContent='✕ 取消';
+      ta.style.height='auto';ta.style.height=ta.scrollHeight+'px';
+      setTimeout(()=>ta.focus(),50);
+    }
+  };
+  noteWrap.appendChild(noteDisplay);noteWrap.appendChild(noteEdit);
   body.appendChild(noteWrap);
 
   console.log('[Familyz] openDrawer step 8: url');
@@ -2360,8 +2394,8 @@ document.addEventListener('paste', e=>{
 });
 function saveNote(id){
   const idx=posts.findIndex(p=>p.id===id);if(idx<0)return;
-  posts[idx].note=$('note-area').value;
-  save();renderAll();toast('備註已儲存');
+  posts[idx].note=($('note-area')||{}).value||'';
+  save();renderAll();openDrawer(id);toast('備註已儲存');
 }
 function closeDrawer(){
   $('drawer-overlay').classList.remove('open');
