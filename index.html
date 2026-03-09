@@ -1852,7 +1852,7 @@ function addPost(){
 // ── OG IMAGE FETCH ──
 async function fetchOGImage(url, postId){
   console.log('[Familyz] fetchOGImage start:', url);
-  if(!url||!url.includes('threads'))return;
+  if(!url||!url.startsWith('http'))return;
 
   // 方法一：Threads oEmbed API（官方，無需 proxy，有 CORS）
   try{
@@ -2034,7 +2034,10 @@ function saveEdit(){
   }
   closeEdit();save();renderAll();
   // 網址變了就重抓 OG 圖（會同步更新卡片縮圖和 ogUrl）
-  if(urlChanged&&!imgUrl)fetchOGImage(newUrl,id);
+  if(urlChanged){
+    console.log('[Familyz] URL changed, refetching OG image for', newUrl);
+    fetchOGImage(newUrl,id);
+  }
   // refresh drawer if open
   if(drawerPostId===id)openDrawer(id);
   toast('✦ 已儲存！');
