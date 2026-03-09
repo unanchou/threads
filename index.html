@@ -849,6 +849,19 @@ select{
   border-radius:6px;transition:all .15s;
 }
 .mi-del:hover{background:var(--rose-dim);color:var(--rose);}
+
+.mi-edit-input{
+  flex:1;font-size:14px;font-weight:500;color:var(--ink);
+  background:var(--white);border:1.5px solid var(--violet);
+  border-radius:7px;padding:2px 8px;font-family:'DM Sans',sans-serif;
+  outline:none;
+}
+.mi-rename{
+  background:transparent;border:none;color:var(--ink3);
+  font-size:13px;cursor:pointer;padding:2px 6px;
+  border-radius:6px;transition:all .15s;
+}
+.mi-rename:hover{background:var(--violet-dim);color:var(--violet);}
 .add-row{display:flex;gap:6px;}
 .add-row input{flex:1;}
 .bsm{
@@ -2123,6 +2136,7 @@ function renderDrawerSnaps(container, p){
     var cardImg=document.querySelector('[data-id="'+p.id+'"] .cimg');
     if(cardImg&&cardImg.src&&!cardImg.src.endsWith('undefined'))ogUrl=cardImg.src;
   }
+  console.log('[Familyz] snaps ogUrl=',ogUrl,'snaps=',snaps.length,'p.ogUrl=',p.ogUrl,'p.media=',JSON.stringify(p.media));
   if(ogUrl&&snaps.length===0){
     const hint=document.createElement('div');
     hint.style.cssText='margin-bottom:12px;border:1px solid var(--border);border-radius:12px;overflow:hidden;';
@@ -2276,9 +2290,27 @@ function closeSettings(){$('settings-modal').classList.add('hidden');renderAll()
 $('settings-modal').addEventListener('click',e=>{if(e.target===$('settings-modal'))closeSettings();});
 function switchTab(tab,btn){document.querySelectorAll('.stab').forEach(b=>b.classList.remove('on'));btn.classList.add('on');document.querySelectorAll('.settings-body>div').forEach(d=>d.classList.remove('show'));$('stab-'+tab).classList.add('show');}
 function renderSettingsLists(){
-  $('manage-tags-list').innerHTML=tags.map(t=>`<div class="manage-item"><span class="mi-name">${t}</span><span class="mi-count">${posts.filter(p=>(p.tags||[]).includes(t)).length}</span><button class="mi-del" onclick="removeTag('${t}')">✕</button></div>`).join('')||'<p style="font-size:13px;color:var(--ink3)">尚無標籤</p>';
-  $('manage-types-list').innerHTML=types.map(ty=>`<div class="manage-item"><span style="font-size:16px">${ty.emoji}</span><span class="mi-name">${ty.name}</span><span class="mi-count">${posts.filter(p=>p.media_type===ty.id).length}</span>${types.length>1?`<button class="mi-del" onclick="removeType('${ty.id}')">✕</button>`:''}</div>`).join('');
-  $('manage-folders-list').innerHTML=folders.map(f=>`<div class="manage-item"><span class="mi-name">📁 ${f}</span><span class="mi-count">${posts.filter(p=>p.folder===f).length}</span>${folders.length>1?`<button class="mi-del" onclick="removeFolder('${f}')">✕</button>`:''}</div>`).join('');
+  $('manage-tags-list').innerHTML=tags.map(t=>`<div class="manage-item" data-tag="${t}">
+    <span class="mi-name">${t}</span>
+    <span class="mi-count">${posts.filter(p=>(p.tags||[]).includes(t)).length} 筆</span>
+    <button class="mi-rename" onclick="renameTag('${t}')" title="重新命名">✎</button>
+    <button class="mi-del" onclick="removeTag('${t}')" title="刪除">✕</button>
+  </div>`).join('')||'<p style="font-size:13px;color:var(--ink3)">尚無標籤</p>';
+
+  $('manage-types-list').innerHTML=types.map(ty=>`<div class="manage-item" data-type-id="${ty.id}">
+    <span style="font-size:16px">${ty.emoji}</span>
+    <span class="mi-name">${ty.name}</span>
+    <span class="mi-count">${posts.filter(p=>p.media_type===ty.id).length} 筆</span>
+    <button class="mi-rename" onclick="renameType('${ty.id}')" title="重新命名">✎</button>
+    ${types.length>1?`<button class="mi-del" onclick="removeType('${ty.id}')" title="刪除">✕</button>`:''}
+  </div>`).join('');
+
+  $('manage-folders-list').innerHTML=folders.map(f=>`<div class="manage-item" data-folder="${f}">
+    <span class="mi-name">📁 ${f}</span>
+    <span class="mi-count">${posts.filter(p=>p.folder===f).length} 筆</span>
+    <button class="mi-rename" onclick="renameFolder('${f}')" title="重新命名">✎</button>
+    ${folders.length>1?`<button class="mi-del" onclick="removeFolder('${f}')" title="刪除">✕</button>`:''}
+  </div>`).join('');
 }
 function addTag(){const n=$('new-tag').value.trim();if(!n||tags.includes(n)){toast('標籤已存在或為空');return;}tags.push(n);$('new-tag').value='';save();renderSettingsLists();toast('✦ 標籤已新增');}
 function removeTag(n){customConfirm(`刪除標籤「${n}」？`,()=>{tags=tags.filter(x=>x!==n);save();renderSettingsLists();toast('已刪除');});}
@@ -2817,6 +2849,71 @@ async function runProxyDiag(){
   } else {
     rows.innerHTML+=`<div style="font-size:13px;color:var(--rose);font-weight:600;padding:6px 10px;">⚠ 目前所有 proxy 都無法連線</div>`;
   }
+}
+
+
+// ── RENAME：標籤/收藏夾/類型 ──
+function renameTag(oldName){
+  const item=[...document.querySelectorAll('#manage-tags-list .manage-item')]
+    .find(el=>el.dataset.tag===oldName);
+  if(!item)return;
+  const nameEl=item.querySelector('.mi-name');
+  const input=document.createElement('input');
+  input.className='mi-edit-input';input.value=oldName;
+  nameEl.replaceWith(input);
+  input.focus();input.select();
+  const save2=()=>{
+    const newName=input.value.trim();
+    if(!newName||newName===oldName){renderSettingsLists();return;}
+    if(tags.includes(newName)){toast('標籤名稱已存在');return;}
+    tags=tags.map(t=>t===oldName?newName:t);
+    posts=posts.map(p=>({...p,tags:(p.tags||[]).map(t=>t===oldName?newName:t)}));
+    save();renderAll();renderSettingsLists();toast('✦ 已重新命名');
+  };
+  input.addEventListener('keydown',e=>{if(e.key==='Enter')save2();if(e.key==='Escape')renderSettingsLists();});
+  input.addEventListener('blur',save2);
+}
+
+function renameFolder(oldName){
+  const item=[...document.querySelectorAll('#manage-folders-list .manage-item')]
+    .find(el=>el.dataset.folder===oldName);
+  if(!item)return;
+  const nameEl=item.querySelector('.mi-name');
+  const input=document.createElement('input');
+  input.className='mi-edit-input';input.value=oldName;
+  nameEl.replaceWith(input);
+  input.focus();input.select();
+  const save2=()=>{
+    const newName=input.value.trim();
+    if(!newName||newName===oldName){renderSettingsLists();return;}
+    if(folders.includes(newName)){toast('收藏夾名稱已存在');return;}
+    folders=folders.map(f=>f===oldName?newName:f);
+    posts=posts.map(p=>({...p,folder:p.folder===oldName?newName:p.folder}));
+    if(currentFolder===oldName)currentFolder=newName;
+    save();renderAll();renderSettingsLists();toast('✦ 已重新命名');
+  };
+  input.addEventListener('keydown',e=>{if(e.key==='Enter')save2();if(e.key==='Escape')renderSettingsLists();});
+  input.addEventListener('blur',save2);
+}
+
+function renameType(typeId){
+  const item=[...document.querySelectorAll('#manage-types-list .manage-item')]
+    .find(el=>el.dataset.typeId===typeId);
+  if(!item)return;
+  const nameEl=item.querySelector('.mi-name');
+  const input=document.createElement('input');
+  input.className='mi-edit-input';input.value=nameEl.textContent;
+  nameEl.replaceWith(input);
+  input.focus();input.select();
+  const save2=()=>{
+    const newName=input.value.trim();
+    if(!newName){renderSettingsLists();return;}
+    const idx=types.findIndex(t=>t.id===typeId);if(idx<0)return;
+    types[idx].name=newName;
+    save();renderAll();renderSettingsLists();toast('✦ 已重新命名');
+  };
+  input.addEventListener('keydown',e=>{if(e.key==='Enter')save2();if(e.key==='Escape')renderSettingsLists();});
+  input.addEventListener('blur',save2);
 }
 
 // ── INIT ──
