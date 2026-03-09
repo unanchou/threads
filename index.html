@@ -10,8 +10,46 @@
 <meta name="twitter:title" content="Familyz">
 <meta name="twitter:description" content="Familyz 整理區">
 <link href="https://fonts.googleapis.com/css2?family=DM+Serif+Display:ital@0;1&family=DM+Sans:ital,opsz,wght@0,9..40,300;0,9..40,400;0,9..40,500;0,9..40,600;0,9..40,700;1,9..40,400&family=Noto+Sans+TC:wght@300;400;500;600&display=swap" rel="stylesheet">
-<script src="https://accounts.google.com/gsi/client" async></script>
-<script src="https://apis.google.com/js/api.js" async></script>
+<script src="https://accounts.google.com/gsi/client" async>
+// ── CUSTOM CONFIRM（取代 window.confirm，相容 GitHub Pages iframe）──
+function customConfirm(msg, onOk, okLabel='確定', danger=true){
+  const overlay=$('cfrm-overlay');
+  const okBtn=$('cfrm-ok');
+  $('cfrm-msg').textContent=msg;
+  okBtn.textContent=okLabel;
+  okBtn.style.background=danger?'var(--rose)':'var(--grad-main)';
+  overlay.style.display='flex';
+  const close=()=>{ overlay.style.display='none'; okBtn.replaceWith(okBtn.cloneNode(true)); $('cfrm-cancel').replaceWith($('cfrm-cancel').cloneNode(true)); rebindConfirmBtns(); };
+  $('cfrm-ok').onclick=()=>{ close(); onOk(); };
+  $('cfrm-cancel').onclick=close;
+  overlay.onclick=(e)=>{ if(e.target===overlay)close(); };
+  // focus ok btn for keyboard confirm
+  setTimeout(()=>$('cfrm-ok').focus(),50);
+}
+function rebindConfirmBtns(){
+  // re-attach after clone (called inside close())
+}
+</script>
+<script src="https://apis.google.com/js/api.js" async>
+// ── CUSTOM CONFIRM（取代 window.confirm，相容 GitHub Pages iframe）──
+function customConfirm(msg, onOk, okLabel='確定', danger=true){
+  const overlay=$('cfrm-overlay');
+  const okBtn=$('cfrm-ok');
+  $('cfrm-msg').textContent=msg;
+  okBtn.textContent=okLabel;
+  okBtn.style.background=danger?'var(--rose)':'var(--grad-main)';
+  overlay.style.display='flex';
+  const close=()=>{ overlay.style.display='none'; okBtn.replaceWith(okBtn.cloneNode(true)); $('cfrm-cancel').replaceWith($('cfrm-cancel').cloneNode(true)); rebindConfirmBtns(); };
+  $('cfrm-ok').onclick=()=>{ close(); onOk(); };
+  $('cfrm-cancel').onclick=close;
+  overlay.onclick=(e)=>{ if(e.target===overlay)close(); };
+  // focus ok btn for keyboard confirm
+  setTimeout(()=>$('cfrm-ok').focus(),50);
+}
+function rebindConfirmBtns(){
+  // re-attach after clone (called inside close())
+}
+</script>
 <style>
 /* ════════════════════════════════════════
    FAMILYZ — Design System v7
@@ -1038,6 +1076,34 @@ mark{background:var(--rose-dim);color:var(--rose);border-radius:4px;padding:1px 
   .toast{bottom:82px;left:16px;right:16px;max-width:none;text-align:center;}
 }
 
+/* ── SNAP DOT on card ── */
+.snap-dot{
+  position:absolute;bottom:10px;left:10px;
+  background:rgba(255,255,255,.88);
+  border:1px solid rgba(255,255,255,.5);
+  border-radius:20px;
+  padding:2px 7px;
+  font-size:11px;font-weight:700;
+  display:flex;align-items:center;gap:2px;
+  backdrop-filter:blur(8px);
+  z-index:4;
+  box-shadow:0 1px 4px rgba(0,0,0,.1);
+  color:var(--ink2);
+}
+[data-theme="dark"] .snap-dot{background:rgba(16,12,24,.75);}
+.snap-dot span{font-size:10px;background:var(--rose);color:#fff;border-radius:10px;padding:0 4px;}
+.selecting .snap-dot{display:none;}
+
+
+/* ── CUSTOM CONFIRM MODAL ── */
+.cfrm-overlay{position:fixed;inset:0;background:var(--overlay-bg);backdrop-filter:blur(8px);z-index:600;display:flex;align-items:center;justify-content:center;padding:20px;animation:fadeIn .15s ease;}
+.cfrm-box{background:var(--bg);border:1px solid var(--border);border-radius:20px;padding:26px 24px 20px;max-width:340px;width:100%;box-shadow:var(--shadow-lg);animation:popIn .18s ease;}
+.cfrm-msg{font-size:15px;color:var(--ink);margin-bottom:20px;line-height:1.6;}
+.cfrm-btns{display:flex;gap:8px;justify-content:flex-end;}
+.cfrm-cancel{padding:8px 18px;border-radius:10px;border:1px solid var(--border);background:var(--bg2);color:var(--ink2);font-size:14px;font-weight:500;cursor:pointer;font-family:'DM Sans',sans-serif;transition:all .15s;}
+.cfrm-cancel:hover{border-color:var(--ink2);}
+.cfrm-ok{padding:8px 20px;border-radius:10px;border:none;background:var(--rose);color:#fff;font-size:14px;font-weight:600;cursor:pointer;font-family:'DM Sans',sans-serif;transition:opacity .15s;}
+.cfrm-ok:hover{opacity:.85;}
 /* ── FORM COLLAPSE ── */
 .form-collapse-btn{width:100%;display:flex;align-items:center;justify-content:space-between;background:none;border:none;cursor:pointer;padding:0;font-family:'DM Sans',sans-serif;color:var(--ink2);margin-bottom:10px;}
 .form-collapse-btn .slabel{margin-bottom:0;flex:1;pointer-events:none;}
@@ -1376,10 +1442,9 @@ async function drawerAddSnap(){
   input.click();
 }
 function drawerDeleteSnap(){
-  if(!confirm('刪除這張截圖？'))return;
   const idx=posts.findIndex(p=>p.id===drawerPostId);if(idx<0)return;
-  delete posts[idx].snapshot;
-  save();openDrawer(drawerPostId);toast('截圖已刪除');
+  posts[idx].snapshots=[];posts[idx].snapshot=null;
+  save();openDrawer(drawerPostId);toast('已清除快拍');
 }
 
 // Lightbox for snapshot
@@ -1596,11 +1661,13 @@ function addFolderFromSettings(){
   save();renderFolderBar();renderSettingsLists();toast('✦ 收藏夾已新增');
 }
 function removeFolder(name){
-  if(!confirm(`刪除收藏夾「${name}」？（其中的收藏會移到未分類）`))return;
-  posts=posts.map(p=>p.folder===name?{...p,folder:'未分類'}:p);
-  folders=folders.filter(f=>f!==name);
-  if(currentFolder===name){currentFolder='all';}
-  save();renderFolderBar();renderSettingsLists();renderAll();toast('已刪除收藏夾');
+  if(folders.length<=1){toast('至少保留一個收藏夾');return;}
+  customConfirm(`刪除收藏夾「${name}」？其中的收藏會移到未分類。`,()=>{
+    posts=posts.map(p=>p.folder===name?{...p,folder:'未分類'}:p);
+    folders=folders.filter(f=>f!==name);
+    if(currentFolder===name)currentFolder='all';
+    save();renderAll();toast('已刪除');
+  });
 }
 function renderFolderBar(){
   const bar=document.querySelector('.folder-bar-inner');
@@ -1659,6 +1726,18 @@ async function fetchOGImage(url, postId){
       const idx=posts.findIndex(p=>p.id===postId);
       if(idx>=0){
         posts[idx].media=[{kind:'image',url:imgUrl}];
+        // 自動把 OG 圖轉成 base64 存進 snapshots（若還沒有快拍）
+        const snaps=posts[idx].snapshots||[];
+        if(snaps.length===0){
+          try{
+            const b64=await urlToBase64(imgUrl);
+            if(b64){
+              posts[idx].snapshots=[b64];
+              // 向下相容：同時更新舊 snapshot 欄位
+              posts[idx].snapshot=b64;
+            }
+          }catch(e2){}
+        }
         save();
         const wrap=document.querySelector(`[data-id="${postId}"] .cimg-wrap`);
         if(wrap){
@@ -1672,13 +1751,41 @@ async function fetchOGImage(url, postId){
   }catch(e){}
 }
 
+// 把任意圖片 URL 轉成 base64（透過 canvas，需 CORS 允許或走 proxy）
+async function urlToBase64(imgUrl){
+  // 先嘗試直接 fetch（Threads CDN 通常有 CORS）
+  try{
+    const r=await fetch(imgUrl,{mode:'cors'});
+    if(!r.ok)throw new Error('cors fail');
+    const blob=await r.blob();
+    return await blobToBase64(blob);
+  }catch{
+    // fallback: allorigins raw proxy
+    try{
+      const proxy=`https://api.allorigins.win/raw?url=${encodeURIComponent(imgUrl)}`;
+      const r=await fetch(proxy);
+      if(!r.ok)throw new Error('proxy fail');
+      const blob=await r.blob();
+      return await blobToBase64(blob);
+    }catch{return null;}
+  }
+}
+async function blobToBase64(blob){
+  return new Promise((res,rej)=>{
+    const reader=new FileReader();
+    reader.onload=()=>res(reader.result);
+    reader.onerror=rej;
+    reader.readAsDataURL(blob);
+  });
+}
+
 // ── QUICK SAVE ──
 function quickSave(){
   const url=$('f-url').value.trim();
   if(!url){toast('⚠ 請先填入網址');return;}
   if(posts.some(p=>p.url===url)){toast('⚠ 此網址已收藏過了！');return;}
   const folder=currentFolder==='all'?(folders[0]||'未分類'):currentFolder;
-  const newPost={id:nextId++, url, description:'', post_date:todayStr(), media_type:'image', tags:[], media:[], folder, note:'', isQuick:true, order:0, created_at:new Date().toISOString()};
+  const newPost={id:nextId++, url, description:'', post_date:todayStr(), media_type:'image', tags:[], media:[], folder, note:'', isQuick:true, order:0, created_at:new Date().toISOString(), snapshots:[]};
   posts.unshift(newPost);
   $('f-url').value='';$('dup-warn').classList.remove('show');
   save();renderAll();toast('⚡ 速記完成！記得之後補齊資料');
@@ -1686,7 +1793,7 @@ function quickSave(){
 }
 
 // ── DELETE ──
-function deletePost(id){if(!confirm('確定刪除此收藏？'))return;posts=posts.filter(p=>p.id!==id);save();renderAll();toast('已刪除');}
+function deletePost(id){customConfirm('確定刪除此收藏？',()=>{posts=posts.filter(p=>p.id!==id);save();renderAll();toast('已刪除');});}
 
 // ── EDIT ──
 function openEdit(id){
@@ -1759,44 +1866,8 @@ function openDrawer(id){
     body.appendChild(field('標籤',tw));
   }
 
-  // 📸 截圖快拍
-  const snapWrap=document.createElement('div');snapWrap.className='d-field';
-  const snapLabelRow=document.createElement('div');
-  snapLabelRow.style.cssText='display:flex;align-items:center;gap:6px;margin-bottom:6px';
-  const snapLbl=document.createElement('div');snapLbl.className='d-label';snapLbl.style.marginBottom='0';snapLbl.textContent='📸 截圖快拍';
-  snapLabelRow.appendChild(snapLbl);
-  if(p.snapshot){
-    const delBtn=document.createElement('button');delBtn.className='d-snap-del';delBtn.textContent='刪除截圖';
-    delBtn.onclick=drawerDeleteSnap;snapLabelRow.appendChild(delBtn);
-  } else {
-    const addBtn=document.createElement('button');addBtn.className='d-snap-del';addBtn.textContent='＋ 上傳 / 貼上截圖';
-    addBtn.onclick=drawerAddSnap;snapLabelRow.appendChild(addBtn);
-  }
-  snapWrap.appendChild(snapLabelRow);
-  if(p.snapshot){
-    const img=document.createElement('img');img.className='d-snap';img.src=p.snapshot;
-    img.title='點擊放大';img.onclick=()=>openSnapLightbox(p.snapshot);
-    snapWrap.appendChild(img);
-  } else {
-    // 貼上區域 — 可聚焦，直接監聽 paste
-    const paste=document.createElement('div');
-    paste.className='drawer-snap-upload';paste.id='drawer-paste-zone';
-    paste.tabIndex=0;
-    paste.innerHTML='📷 點擊後按 <kbd style="background:var(--bg2);border:1px solid var(--border);border-radius:4px;padding:1px 6px;font-size:12px">Ctrl+V</kbd> 貼上，或點此選檔';
-    paste.addEventListener('click', e=>{
-      // 如果是點空白處就聚焦等待貼上
-      paste.focus();
-      // 同時也觸發選檔
-      drawerAddSnap();
-    });
-    paste.addEventListener('paste', handlePasteSnap);
-    paste.addEventListener('focus', ()=>{ paste.style.borderColor='var(--purple2)'; paste.style.background='var(--lilac)'; });
-    paste.addEventListener('blur',  ()=>{ paste.style.borderColor=''; paste.style.background=''; });
-    snapWrap.appendChild(paste);
-    // 抽屜開啟後自動聚焦貼上區讓 Ctrl+V 可用
-    setTimeout(()=>paste.focus(),200);
-  }
-  body.appendChild(snapWrap);
+  // 📸 截圖快拍（多張，最多 10 張）
+  renderDrawerSnaps(body, p);
 
   // 私人備註
   const noteWrap=document.createElement('div');noteWrap.className='d-field';
@@ -1821,6 +1892,69 @@ function openDrawer(id){
   if(sb)sb.textContent=p.starred?'⭐':'☆';
 }
 
+// ── 多張快拍：渲染區塊 ──
+function renderDrawerSnaps(container, p){
+  const MAX=10;
+  const snaps=p.snapshots||[];
+  const wrap=document.createElement('div');wrap.className='d-field';wrap.id='d-snaps-wrap';
+
+  // 標題列
+  const hdr=document.createElement('div');
+  hdr.style.cssText='display:flex;align-items:center;gap:8px;margin-bottom:10px';
+  const lbl=document.createElement('div');lbl.className='d-label';lbl.style.marginBottom='0';
+  lbl.textContent=`📸 截圖快拍（${snaps.length}/10）`;
+  hdr.appendChild(lbl);
+  wrap.appendChild(hdr);
+
+  // 圖片 grid
+  if(snaps.length>0){
+    const grid=document.createElement('div');
+    grid.style.cssText='display:grid;grid-template-columns:repeat(auto-fill,minmax(110px,1fr));gap:8px;margin-bottom:10px';
+    snaps.forEach((src,i)=>{
+      const cell=document.createElement('div');cell.style.cssText='position:relative;border-radius:10px;overflow:hidden;aspect-ratio:1;background:var(--bg2)';
+      const img=document.createElement('img');
+      img.src=src;img.style.cssText='width:100%;height:100%;object-fit:cover;cursor:zoom-in;display:block;transition:opacity .15s';
+      img.onclick=()=>openSnapLightbox(src);
+      img.onmouseenter=()=>img.style.opacity='.85';
+      img.onmouseleave=()=>img.style.opacity='1';
+      const del=document.createElement('button');
+      del.style.cssText='position:absolute;top:4px;right:4px;width:22px;height:22px;border-radius:50%;background:rgba(0,0,0,.55);border:none;color:#fff;font-size:11px;cursor:pointer;display:flex;align-items:center;justify-content:center;z-index:2';
+      del.textContent='✕';
+      del.title='刪除此快拍';
+      del.onclick=(e)=>{e.stopPropagation();drawerDeleteSnapAt(i);};
+      cell.appendChild(img);cell.appendChild(del);
+      grid.appendChild(cell);
+    });
+    wrap.appendChild(grid);
+  }
+
+  // 新增區（未滿 10 張才顯示）
+  if(snaps.length<MAX){
+    const addZone=document.createElement('div');
+    addZone.className='drawer-snap-upload';addZone.id='drawer-paste-zone';
+    addZone.tabIndex=0;
+    addZone.innerHTML=`<span style="font-size:18px">📷</span><br><span>點擊選檔 或 <kbd style="background:var(--bg2);border:1px solid var(--border);border-radius:4px;padding:1px 6px;font-size:11px">Ctrl+V</kbd> 貼上</span>`;
+    addZone.style.cssText='display:flex;flex-direction:column;align-items:center;gap:4px;padding:14px;';
+    addZone.addEventListener('click',()=>{addZone.focus();drawerAddSnap();});
+    addZone.addEventListener('paste',handlePasteSnap);
+    addZone.addEventListener('focus',()=>{addZone.style.borderColor='var(--violet)';addZone.style.background='var(--violet-dim)';});
+    addZone.addEventListener('blur',()=>{addZone.style.borderColor='';addZone.style.background='';});
+    wrap.appendChild(addZone);
+    setTimeout(()=>addZone.focus(),200);
+  }
+
+  container.appendChild(wrap);
+}
+
+// 刪除指定 index 的快拍
+function drawerDeleteSnapAt(i){
+  const idx=posts.findIndex(p=>p.id===drawerPostId);if(idx<0)return;
+  posts[idx].snapshots.splice(i,1);
+  // 同步更新舊 snapshot 欄位
+  posts[idx].snapshot=posts[idx].snapshots[0]||null;
+  save();openDrawer(drawerPostId);toast('已刪除快拍');
+}
+
 // 貼上截圖處理
 async function handlePasteSnap(e){
   if(!drawerPostId)return;
@@ -1832,19 +1966,19 @@ async function handlePasteSnap(e){
       const file=item.getAsFile();
       const b64=await compressImage(file);
       const idx=posts.findIndex(p=>p.id===drawerPostId);if(idx<0)return;
-      posts[idx].snapshot=b64;
+      if(!posts[idx].snapshots)posts[idx].snapshots=[];
+      if(posts[idx].snapshots.length>=10){toast('⚠ 已達上限 10 張');return;}
+      posts[idx].snapshots.push(b64);
+      posts[idx].snapshot=posts[idx].snapshots[0];
       save();openDrawer(drawerPostId);toast('📸 截圖已貼上！');
-      // 重新聚焦讓使用者繼續操作
-      setTimeout(()=>$('drawer')?.focus(),100);
       break;
     }
   }
 }
 
-// 全域 fallback（點其他地方後仍可 Ctrl+V）
+// 全域 fallback Ctrl+V
 document.addEventListener('paste', e=>{
   if(!drawerPostId)return;
-  // 如果焦點在 textarea/input 裡就不攔截
   const tag=document.activeElement?.tagName;
   if(tag==='TEXTAREA'||tag==='INPUT')return;
   handlePasteSnap(e);
@@ -1879,7 +2013,7 @@ function drawerToggleStar(){
 function toggleSelect(){selecting=!selecting;selected.clear();$('sel-btn').classList.toggle('on',selecting);$('batch-bar').classList.toggle('hidden',!selecting);$('cards').classList.toggle('selecting',selecting);render();}
 function exitSelect(){selecting=false;selected.clear();$('sel-btn').classList.remove('on');$('batch-bar').classList.add('hidden');$('cards').classList.remove('selecting');render();}
 function toggleCard(id){selected.has(id)?selected.delete(id):selected.add(id);$('batch-count').textContent=`已選 ${selected.size} 筆`;const c=document.querySelector(`[data-id="${id}"]`);if(c){c.classList.toggle('selected',selected.has(id));c.querySelector('.card-check').textContent=selected.has(id)?'✓':'';}}
-function batchDelete(){if(!selected.size){toast('請先選取');return;}if(!confirm(`刪除 ${selected.size} 筆？`))return;posts=posts.filter(p=>!selected.has(p.id));save();exitSelect();renderAll();toast(`已刪除 ${selected.size} 筆`);}
+function batchDelete(){if(!selected.size){toast('請先選取');return;}customConfirm(`刪除 ${selected.size} 筆收藏？`,()=>{posts=posts.filter(p=>!selected.has(p.id));save();exitSelect();renderAll();toast(`已刪除 ${selected.size} 筆`);});}
 function batchTag(){if(!selected.size){toast('請先選取');return;}$('btag-tags').innerHTML=tags.map(t=>`<div class="tc"><input type="checkbox" id="btt-${t}"><label for="btt-${t}">${t}</label></div>`).join('');$('btag-modal').classList.remove('hidden');}
 function applyBatchTag(){const sel=tags.filter(t=>$('btt-'+t)?.checked);posts=posts.map(p=>selected.has(p.id)?{...p,tags:[...new Set([...(p.tags||[]),...sel])]}:p);save();closeBtag();exitSelect();renderAll();toast(`✦ 已套用標籤`);}
 function closeBtag(){$('btag-modal').classList.add('hidden');}
@@ -1900,12 +2034,12 @@ function renderSettingsLists(){
   $('manage-folders-list').innerHTML=folders.map(f=>`<div class="manage-item"><span class="mi-name">📁 ${f}</span><span class="mi-count">${posts.filter(p=>p.folder===f).length}</span>${folders.length>1?`<button class="mi-del" onclick="removeFolder('${f}')">✕</button>`:''}</div>`).join('');
 }
 function addTag(){const n=$('new-tag').value.trim();if(!n||tags.includes(n)){toast('標籤已存在或為空');return;}tags.push(n);$('new-tag').value='';save();renderSettingsLists();toast('✦ 標籤已新增');}
-function removeTag(n){if(!confirm(`刪除標籤「${n}」？`))return;tags=tags.filter(x=>x!==n);save();renderSettingsLists();toast('已刪除');}
+function removeTag(n){customConfirm(`刪除標籤「${n}」？`,()=>{tags=tags.filter(x=>x!==n);save();renderSettingsLists();toast('已刪除');});}
 function addType(){const name=$('new-type-name').value.trim(),emoji=$('new-type-emoji').value.trim()||'📌';if(!name){toast('請填入名稱');return;}types.push({name,emoji,id:'c_'+Date.now()});$('new-type-name').value='';$('new-type-emoji').value='';save();renderSettingsLists();toast('✦ 類型已新增');}
-function removeType(id){if(types.length<=1){toast('至少保留一個類型');return;}if(!confirm('刪除此類型？'))return;types=types.filter(t=>t.id!==id);save();renderSettingsLists();toast('已刪除');}
+function removeType(id){if(types.length<=1){toast('至少保留一個類型');return;}customConfirm('刪除此類型？',()=>{types=types.filter(t=>t.id!==id);save();renderSettingsLists();toast('已刪除');});}
 function exportData(){const blob=new Blob([JSON.stringify({posts,tags,types,folders,exportedAt:new Date().toISOString(),v:2},null,2)],{type:'application/json'});const a=document.createElement('a');a.href=URL.createObjectURL(blob);a.download=`familyz-${todayStr()}.json`;a.click();toast('✦ 已匯出備份！');}
 function importData(e){const file=e.target.files[0];if(!file)return;const r=new FileReader();r.onload=ev=>{try{const d=JSON.parse(ev.target.result);let added=0;if(d.tags)tags=[...new Set([...tags,...d.tags])];if(d.types)d.types.forEach(ty=>{if(!types.find(t=>t.id===ty.id))types.push(ty);});if(d.folders)d.folders.forEach(f=>{if(!folders.includes(f))folders.push(f);});if(d.posts)d.posts.forEach(p=>{if(!posts.find(x=>x.url===p.url)){posts.push({...p,id:nextId++,folder:p.folder||'未分類',note:p.note||''});added++;}});save();renderAll();toast(`✦ 匯入成功！新增 ${added} 筆`);}catch{toast('⚠ 匯入失敗');}};r.readAsText(file);e.target.value='';}
-function clearAll(){if(!confirm('確定清空所有資料？'))return;posts=[];save();renderAll();closeSettings();toast('已清空');}
+function clearAll(){customConfirm('確定清空所有資料？這無法復原。',()=>{posts=[];save();renderAll();closeSettings();toast('已清空');});}
 
 // ── SIDEBAR COLLAPSE ──
 let sidebarOpen=true;
@@ -2080,6 +2214,16 @@ ${pwScript}
 </header>
 <main>${bodyHtml}</main>
 <footer>✦ Familyz · 匯出於 ${new Date().toLocaleString('zh-TW')}</footer>
+
+<div id="cfrm-overlay" class="cfrm-overlay" style="display:none" onclick="e=>e.stopPropagation()">
+  <div class="cfrm-box">
+    <div class="cfrm-msg" id="cfrm-msg"></div>
+    <div class="cfrm-btns">
+      <button class="cfrm-cancel" id="cfrm-cancel">取消</button>
+      <button class="cfrm-ok" id="cfrm-ok">確定</button>
+    </div>
+  </div>
+</div>
 </body>
 </html>`;
 
@@ -2219,13 +2363,18 @@ function render(){
     const isSeld=selected.has(p.id);
     const thumbs=vw!=='list'?(p.media||[]).filter(m=>m.kind==='image').slice(0,5).map(m=>`<img class="th" src="${m.url}" loading="lazy">`).join(''):'';
     const noteDot=p.note?'<div class="note-dot"></div>':'';
+    const snapCount=(p.snapshots||[]).length;
+    const snapDot=snapCount>0?`<div class="snap-dot" title="${snapCount} 張快拍">📷${snapCount>1?'<span>'+snapCount+'</span>':''}</div>`:'';
     const starCls=p.starred?' starred':'';
     const starIco=p.starred?'⭐':'☆';
     const quickCls=p.isQuick?' is-quick':'';
-    const deletedWarn=p.snapshot?'<div class="deleted-warn">⚠ 貼文可能已刪除（快拍已備份）</div>':'';
+    const deletedWarn=p.snapshot&&p.urlDead
+      ?'<div class="deleted-warn">⚠ 貼文可能已刪除（快拍已備份）</div>'
+      :'';
     return `<div class="card${isSeld?' selected':''}${quickCls}" data-id="${p.id}" style="animation-delay:${i*.04}s" onclick="cardClick(event,${p.id})">
       <div class="card-check">${isSeld?'✓':''}</div>
       ${noteDot}
+      ${snapDot}
       <button class="star-btn${starCls}" onclick="toggleStar(${p.id},event)" title="${p.starred?'取消最愛':'加入最愛'}">${starIco}</button>
       <div class="card-toolbar">
         <button class="ct-btn ct-edit" onclick="event.stopPropagation();openEdit(${p.id})">✏ 編輯</button>
@@ -2246,6 +2395,49 @@ function render(){
     </div>`;
   }).join('');
   if(sort==='manual')initDrag();
+  // 背景偷偷檢查有快拍的貼文 URL 是否還活著
+  checkDeadUrls(data.filter(p=>p.snapshot&&p.urlDead===undefined));
+}
+
+// ── URL DEAD CHECK ──
+// 用 allorigins proxy no-op fetch 來判斷貼文是否還存在
+// 結果存進 post.urlDead (true/false/null)，只查一次
+const _urlCheckQueue=new Set();
+function checkDeadUrls(candidates){
+  candidates.forEach(p=>{
+    if(_urlCheckQueue.has(p.id))return;
+    _urlCheckQueue.add(p.id);
+    // 用 fetch HEAD via proxy（threads.net 不允許直連 CORS）
+    const proxy=`https://api.allorigins.win/get?url=${encodeURIComponent(p.url)}&callback=0`;
+    fetch(proxy,{signal:AbortSignal.timeout(8000)})
+      .then(r=>r.json())
+      .then(d=>{
+        // allorigins 返回 status: 0 或 HTTP 狀態碼
+        // Threads 刪除貼文通常返回 404 或重導向到首頁（status 200 但內容不含貼文）
+        const s=d?.status?.http_code??0;
+        const dead=(s===404||s===410||(s===200&&(d?.contents||'').includes('Page Not Found')));
+        const idx=posts.findIndex(x=>x.id===p.id);
+        if(idx>=0&&posts[idx].urlDead!==dead){
+          posts[idx].urlDead=dead;
+          localSave();
+          // 只更新這張卡片的警示，不 re-render 全部
+          const warn=document.querySelector(`[data-id="${p.id}"] .deleted-warn`);
+          const cbody=document.querySelector(`[data-id="${p.id}"] .cbody`);
+          if(dead&&cbody&&!warn){
+            const div=document.createElement('div');
+            div.className='deleted-warn';
+            div.textContent='⚠ 貼文可能已刪除（快拍已備份）';
+            cbody.prepend(div);
+          }else if(!dead&&warn){
+            warn.remove();
+          }
+        }
+      })
+      .catch(()=>{
+        // 網路錯誤不標記，等下次再試
+        _urlCheckQueue.delete(p.id);
+      });
+  });
 }
 
 function cardClick(e,id){
@@ -2289,6 +2481,35 @@ document.addEventListener('keydown',e=>{
   if(e.key==='/'&&!['INPUT','TEXTAREA'].includes(document.activeElement.tagName)){e.preventDefault();$('q').focus();}
   if(e.key==='Escape'){closeEdit();closeBtag();closeBmove();closeSettings();closeLightbox();closeDrawer();}
 });
+
+// ── CUSTOM CONFIRM（取代 window.confirm，相容 GitHub Pages iframe）──
+function customConfirm(msg, onOk, okLabel='確定', danger=true){
+  const overlay=$('cfrm-overlay');
+  const okBtn=$('cfrm-ok');
+  $('cfrm-msg').textContent=msg;
+  okBtn.textContent=okLabel;
+  okBtn.style.background=danger?'var(--rose)':'var(--grad-main)';
+  overlay.style.display='flex';
+  const close=()=>{ overlay.style.display='none'; okBtn.replaceWith(okBtn.cloneNode(true)); $('cfrm-cancel').replaceWith($('cfrm-cancel').cloneNode(true)); rebindConfirmBtns(); };
+  $('cfrm-ok').onclick=()=>{ close(); onOk(); };
+  $('cfrm-cancel').onclick=close;
+  overlay.onclick=(e)=>{ if(e.target===overlay)close(); };
+  // focus ok btn for keyboard confirm
+  setTimeout(()=>$('cfrm-ok').focus(),50);
+}
+function rebindConfirmBtns(){
+  // re-attach after clone (called inside close())
+}
 </script>
+
+<div id="cfrm-overlay" class="cfrm-overlay" style="display:none" onclick="e=>e.stopPropagation()">
+  <div class="cfrm-box">
+    <div class="cfrm-msg" id="cfrm-msg"></div>
+    <div class="cfrm-btns">
+      <button class="cfrm-cancel" id="cfrm-cancel">取消</button>
+      <button class="cfrm-ok" id="cfrm-ok">確定</button>
+    </div>
+  </div>
+</div>
 </body>
 </html>
