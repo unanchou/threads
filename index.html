@@ -1916,9 +1916,6 @@ async function tryAutoSnapshot(imgUrl, postId){
   posts[i2].snapshots=[b64];
   posts[i2].snapshot=b64;
   save();
-  // 更新卡片 snap dot
-  const dot=document.querySelector(`[data-id="${postId}"] .snap-dot`);
-  if(dot) dot.style.display='flex';
   toast('📷 縮圖已自動存為快拍！');
   console.log('[Familyz] auto snapshot saved');
 }
@@ -2115,32 +2112,29 @@ function renderDrawerSnaps(container, p){
   const hdr=document.createElement('div');
   hdr.style.cssText='display:flex;align-items:center;gap:8px;margin-bottom:10px;flex-wrap:wrap';
   const lbl=document.createElement('div');lbl.className='d-label';lbl.style.marginBottom='0';
-  lbl.textContent=`📸 截圖快拍（${snaps.length}/10）`;
+  lbl.textContent='📸 快拍備份（'+snaps.length+'/10）';
   hdr.appendChild(lbl);
-  // 如果有 OG 圖且快拍是空的，顯示「從縮圖存檔」按鈕
+  wrap.appendChild(hdr);
+
+  // 如果有 OG 圖且還沒有快拍，顯示縮圖預覽 + 操作提示
   const ogUrl=p._ogUrl||((p.media||[]).find(m=>m.kind==='image')||{}).url;
   if(ogUrl&&snaps.length===0){
-    const fromOG=document.createElement('button');
-    fromOG.className='d-snap-del';
-    fromOG.textContent='⬇ 從縮圖存快拍';
-    fromOG.style.cssText='background:var(--violet-dim);color:var(--violet);border-color:var(--violet-dim)';
-    fromOG.onclick=async()=>{
-      fromOG.textContent='轉換中…';fromOG.disabled=true;
-      const b64=await urlToBase64(ogUrl);
-      if(b64){
-        const i2=posts.findIndex(x=>x.id===p.id);
-        if(i2>=0){
-          posts[i2].snapshots=[b64];posts[i2].snapshot=b64;
-          save();openDrawer(p.id);toast('📷 縮圖已存為快拍！');
-        }
-      } else {
-        fromOG.textContent='⬇ 從縮圖存快拍';fromOG.disabled=false;
-        toast('⚠ 無法自動轉換，請手動截圖貼上');
-      }
-    };
-    hdr.appendChild(fromOG);
+    const hint=document.createElement('div');
+    hint.style.cssText='margin-bottom:12px;border:1px solid var(--border);border-radius:12px;overflow:hidden;';
+    // 縮圖預覽
+    const previewImg=document.createElement('img');
+    previewImg.src=ogUrl;
+    previewImg.style.cssText='width:100%;max-height:180px;object-fit:cover;display:block;';
+    previewImg.onerror=function(){this.parentElement.remove();};
+    // 說明文字
+    const hintTxt=document.createElement('div');
+    hintTxt.style.cssText='padding:10px 14px;background:var(--bg2);font-size:12px;color:var(--ink3);line-height:1.6;';
+    hintTxt.innerHTML='⬆ 這是目前的縮圖（從外部載入，貼文刪除後會消失）<br>'
+      +'<b style="color:var(--ink2)">右鍵點圖片 → 複製圖片 → 在下方貼上</b>，即可存為永久快拍';
+    hint.appendChild(previewImg);
+    hint.appendChild(hintTxt);
+    wrap.appendChild(hint);
   }
-  wrap.appendChild(hdr);
 
   // 圖片 grid
   if(snaps.length>0){
