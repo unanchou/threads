@@ -1714,62 +1714,130 @@ function addPost(){
 
 // ── OG IMAGE FETCH ──
 async function fetchOGImage(url, postId){
+  console.log('[Familyz] fetchOGImage start:', url);
   try{
-    const proxy=`https://api.allorigins.win/get?url=${encodeURIComponent(url)}`;
-    const res=await fetch(proxy);const data=await res.json();
-    const html=data.contents||'';
-    const m=html.match(/<meta[^>]+property=["']og:image["'][^>]+content=["']([^"']+)["']/i)
-            ||html.match(/<meta[^>]+content=["']([^"']+)["'][^>]+property=["']og:image["']/i)
-            ||html.match(/<meta[^>]+name=["']twitter:image["'][^>]+content=["']([^"']+)["']/i);
-    const imgUrl=m?.[1];
-    if(imgUrl){
-      const idx=posts.findIndex(p=>p.id===postId);
-      if(idx>=0){
-        posts[idx].media=[{kind:'image',url:imgUrl}];
-        // 自動把 OG 圖轉成 base64 存進 snapshots（若還沒有快拍）
-        const snaps=posts[idx].snapshots||[];
-        if(snaps.length===0){
-          try{
-            const b64=await urlToBase64(imgUrl);
-            if(b64){
-              posts[idx].snapshots=[b64];
-              // 向下相容：同時更新舊 snapshot 欄位
-              posts[idx].snapshot=b64;
-            }
-          }catch(e2){}
-        }
-        save();
-        const wrap=document.querySelector(`[data-id="${postId}"] .cimg-wrap`);
-        if(wrap){
-          const ty=types.find(t=>t.id===posts[idx].media_type)||{emoji:'📌'};
-          const bcls={image:'b-img',video:'b-vid',mixed:'b-mix',text:'b-txt'}[posts[idx].media_type]||'b-txt';
-          const blbl={image:'IMAGE',video:'VIDEO',mixed:'MIXED',text:'TEXT'}[posts[idx].media_type]||'TEXT';
-          wrap.innerHTML=`<img class="cimg" src="${imgUrl}" loading="lazy">`+`<span class="badge ${bcls}">${ty.emoji} ${blbl}</span>`;
-        }
-      }
+    // 嘗試多個 proxy，哪個回應就用哪個
+    // proxy 列表：依序嘗試，哪個先成功就用哪個
+    async function tryProxy(proxyUrl, isJson){
+      const fetchP=fetch(proxyUrl);
+      const tout=new Promise((_,rej)=>setTimeout(()=>rej(new Error('timeout')),14000));
+      const res=await Promise.race([fetchP,tout]);
+      if(!res.ok)throw new Error('HTTP '+res.status);
+      if(isJson){const d=await res.json();return d.contents||d.data||'';}
+      return await res.text();
     }
-  }catch(e){}
+    const proxyAttempts=[
+      ()=>tryProxy(`https://corsproxy.io/?url=${encodeURIComponent(url)}`,false),
+      ()=>tryProxy(`https://api.allorigins.win/get?url=${encodeURIComponent(url)}`,true),
+      ()=>tryProxy(`https://api.codetabs.com/v1/proxy?quest=${encodeURIComponent(url)}`,false),
+      ()=>tryProxy(`https://proxy.cors.sh/${url}`,false),
+    ];
+    let pageHtml='';
+    for(const attempt of proxyAttempts){
+      try{
+        console.log('[Familyz] trying proxy...');
+        const txt=await attempt();
+        if(txt&&txt.length>500){pageHtml=txt;console.log('[Familyz] got html, len:',txt.length);break;}
+        console.log('[Familyz] proxy returned too short:',txt?.length);
+      }catch(pe){console.log('[Familyz] proxy error:',pe.message);}
+    }
+    if(!pageHtml){console.log('[Familyz] all proxies failed, no html');return;}
+
+    // 解析 OG image
+    const m=pageHtml.match(/<meta[^>]+property=["']og:image["'][^>]+content=["']([^"']+)["']/i)
+            ||pageHtml.match(/<meta[^>]+content=["']([^"']+)["'][^>]+property=["']og:image["']/i)
+            ||pageHtml.match(/<meta[^>]+name=["']twitter:image["'][^>]+content=["']([^"']+)["']/i)
+            ||pageHtml.match(/["']og:image["'][^}]*?["'](https:[^"']+)["']/i);
+    const imgUrl=m?.[1];
+    console.log('[Familyz] OG image URL:', imgUrl);
+    if(!imgUrl){console.log('[Familyz] no OG image in html');return;}
+
+    const idx=posts.findIndex(p=>p.id===postId);
+    if(idx<0)return;
+    posts[idx].media=[{kind:'image',url:imgUrl}];
+    save();
+
+    // 更新卡片封面圖
+    const wrap=document.querySelector(`[data-id="${postId}"] .cimg-wrap`);
+    if(wrap){
+      const ty=types.find(t=>t.id===posts[idx].media_type)||{emoji:'📌'};
+      const bcls={image:'b-img',video:'b-vid',mixed:'b-mix',text:'b-txt'}[posts[idx].media_type]||'b-txt';
+      const blbl={image:'IMAGE',video:'VIDEO',mixed:'MIXED',text:'TEXT'}[posts[idx].media_type]||'TEXT';
+      wrap.innerHTML=`<img class="cimg" src="${imgUrl}" loading="lazy" onerror="this.parentElement.innerHTML='<div class=cph>📌</div>'">`+`<span class="badge ${bcls}">${ty.emoji} ${blbl}</span>`;
+      console.log('[Familyz] card image updated');
+    }
+
+    // 自動備份為 base64 快拍
+    const snaps=posts[idx].snapshots||[];
+    if(snaps.length===0){
+      console.log('[Familyz] trying to save OG as snapshot...');
+      urlToBase64(imgUrl).then(b64=>{
+        console.log('[Familyz] urlToBase64 result:', b64?`ok (${b64.length} chars)`:'null');
+        if(!b64)return;
+        const i2=posts.findIndex(p=>p.id===postId);
+        if(i2<0)return;
+        if((posts[i2].snapshots||[]).length>0)return;
+        posts[i2].snapshots=[b64];
+        posts[i2].snapshot=b64;
+        save();
+        const dot=document.querySelector(`[data-id="${postId}"] .snap-dot`);
+        if(dot)dot.style.display='flex';
+        toast('📷 封面圖已自動備份為快拍');
+      }).catch(e=>console.log('[Familyz] urlToBase64 error:', e.message));
+    }
+  }catch(e){console.log('[Familyz] fetchOGImage outer error:', e.message);}
 }
 
-// 把任意圖片 URL 轉成 base64（透過 canvas，需 CORS 允許或走 proxy）
+// 把圖片 URL 轉 base64 — 多重 proxy fallback 應對 Threads CDN CORS
 async function urlToBase64(imgUrl){
-  // 先嘗試直接 fetch（Threads CDN 通常有 CORS）
-  try{
-    const r=await fetch(imgUrl,{mode:'cors'});
-    if(!r.ok)throw new Error('cors fail');
-    const blob=await r.blob();
-    return await blobToBase64(blob);
-  }catch{
-    // fallback: allorigins raw proxy
+  // 依序嘗試各種方法
+  const proxies=[
+    // 1. corsproxy.io
+    ()=>fetch(`https://corsproxy.io/?${encodeURIComponent(imgUrl)}`),
+    // 2. allorigins raw
+    ()=>fetch(`https://api.allorigins.win/raw?url=${encodeURIComponent(imgUrl)}`),
+    // 3. cors-anywhere (thingproxy)
+    ()=>fetch(`https://thingproxy.freeboard.io/fetch/${imgUrl}`),
+  ];
+  for(const makeReq of proxies){
     try{
-      const proxy=`https://api.allorigins.win/raw?url=${encodeURIComponent(imgUrl)}`;
-      const r=await fetch(proxy);
-      if(!r.ok)throw new Error('proxy fail');
+      const r=await makeReq();
+      if(!r.ok)continue;
+      const ct=r.headers.get('content-type')||'';
+      // 確認是圖片，不是 proxy 的錯誤 HTML
       const blob=await r.blob();
-      return await blobToBase64(blob);
-    }catch{return null;}
+      if(!blob.type.startsWith('image/')&&blob.size<500)continue;
+      const b64=await blobToBase64(blob);
+      if(b64&&b64.startsWith('data:image'))return b64;
+    }catch{}
   }
+  // 最後嘗試：img element + canvas（只有非嚴格 CORS 才成功，但試試無妨）
+  try{
+    return await imgElementToBase64(imgUrl);
+  }catch{}
+  return null;
 }
+
+// canvas 法：用 img element 載入後 drawImage
+function imgElementToBase64(imgUrl){
+  return new Promise((res,rej)=>{
+    const img=new Image();
+    img.crossOrigin='anonymous';
+    img.onload=()=>{
+      try{
+        const c=document.createElement('canvas');
+        c.width=img.naturalWidth;c.height=img.naturalHeight;
+        c.getContext('2d').drawImage(img,0,0);
+        res(c.toDataURL('image/jpeg',0.85));
+      }catch(e){rej(e);}
+    };
+    img.onerror=rej;
+    // 加時間戳避免快取干擾 CORS
+    img.src=imgUrl+(imgUrl.includes('?')?'&':'?')+'_t='+Date.now();
+    setTimeout(()=>rej(new Error('timeout')),8000);
+  });
+}
+
 async function blobToBase64(blob){
   return new Promise((res,rej)=>{
     const reader=new FileReader();
@@ -2409,7 +2477,7 @@ function checkDeadUrls(candidates){
     _urlCheckQueue.add(p.id);
     // 用 fetch HEAD via proxy（threads.net 不允許直連 CORS）
     const proxy=`https://api.allorigins.win/get?url=${encodeURIComponent(p.url)}&callback=0`;
-    fetch(proxy,{signal:AbortSignal.timeout(8000)})
+    fetch(proxy)
       .then(r=>r.json())
       .then(d=>{
         // allorigins 返回 status: 0 或 HTTP 狀態碼
@@ -2461,6 +2529,35 @@ function renderAll(){
   updateQuickBadge();
   render();
 }
+
+
+// ── PROXY DIAGNOSTIC（在 console 執行 familyzTestProxy() 可測試）──
+window.familyzTestProxy = async function(testUrl){
+  testUrl = testUrl || 'https://www.threads.com/@07o9i9';
+  const proxies = [
+    {name:'corsproxy.io', url:`https://corsproxy.io/?url=${encodeURIComponent(testUrl)}`, json:false},
+    {name:'allorigins',   url:`https://api.allorigins.win/get?url=${encodeURIComponent(testUrl)}`, json:true},
+    {name:'codetabs',     url:`https://api.codetabs.com/v1/proxy?quest=${encodeURIComponent(testUrl)}`, json:false},
+    {name:'cors.sh',      url:`https://proxy.cors.sh/${testUrl}`, json:false},
+  ];
+  console.log('Testing proxies for:', testUrl);
+  for(const p of proxies){
+    try{
+      const r = await fetch(p.url);
+      const txt = p.json ? (await r.json()).contents||'' : await r.text();
+      const hasOG = txt.includes('og:image');
+      console.log(`✓ ${p.name}: status=${r.status}, len=${txt.length}, hasOG=${hasOG}`);
+      if(hasOG){
+        const m = txt.match(/og:image[^>]+content=["']([^"']+)["']/)||txt.match(/content=["']([^"']+)["'][^>]*og:image/);
+        if(m) console.log(`  OG image: ${m[1].substring(0,80)}`);
+      }
+    }catch(e){
+      console.log(`✗ ${p.name}: ${e.message}`);
+    }
+  }
+  console.log('Done. Use the working proxy name above.');
+};
+console.log('[Familyz] 可在 console 執行 familyzTestProxy() 測試哪個 proxy 有效');
 
 // ── INIT ──
 loadStorage();
