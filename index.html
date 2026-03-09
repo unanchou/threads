@@ -1889,7 +1889,7 @@ async function _applyOGImage(imgUrl, postId){
   const idx=posts.findIndex(p=>p.id===postId);
   if(idx<0)return;
   posts[idx].media=[{kind:'image',url:imgUrl}];
-  posts[idx]._ogUrl=imgUrl; // 記住 OG 圖 URL 供之後快拍用
+  posts[idx].ogUrl=imgUrl; // 記住 OG 圖 URL 供之後快拍用（持久存入 localStorage）
   save();
   // 更新卡片封面
   const wrap=document.querySelector(`[data-id="${postId}"] .cimg-wrap`);
@@ -2117,7 +2117,12 @@ function renderDrawerSnaps(container, p){
   wrap.appendChild(hdr);
 
   // 如果有 OG 圖且還沒有快拍，顯示縮圖預覽 + 操作提示
-  const ogUrl=p._ogUrl||((p.media||[]).find(m=>m.kind==='image')||{}).url;
+  // ogUrl: 優先用存入的 ogUrl，fallback 到 media，再 fallback 到卡片上實際顯示的圖片
+  var ogUrl=p.ogUrl||((p.media||[]).find(m=>m.kind==='image')||{}).url;
+  if(!ogUrl){
+    var cardImg=document.querySelector('[data-id="'+p.id+'"] .cimg');
+    if(cardImg&&cardImg.src&&!cardImg.src.endsWith('undefined'))ogUrl=cardImg.src;
+  }
   if(ogUrl&&snaps.length===0){
     const hint=document.createElement('div');
     hint.style.cssText='margin-bottom:12px;border:1px solid var(--border);border-radius:12px;overflow:hidden;';
@@ -2237,7 +2242,7 @@ function closeDrawer(){
   drawerPostId=null;
 }
 function drawerDelete(){if(drawerPostId){const id=drawerPostId;closeDrawer();deletePost(id);}}
-function drawerEdit(){if(drawerPostId){closeDrawer();setTimeout(()=>openEdit(drawerPostId),80);}}
+function drawerEdit(){if(drawerPostId){const id=drawerPostId;closeDrawer();setTimeout(()=>openEdit(id),80);}}
 function drawerToggleStar(){
   if(!drawerPostId)return;
   const idx=posts.findIndex(p=>p.id===drawerPostId);if(idx<0)return;
