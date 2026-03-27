@@ -3058,7 +3058,7 @@ function render(){
         <button class="ct-btn ct-del" onclick="event.stopPropagation();deletePost(${p.id})">✕</button>
       </div>
       <div class="cimg-wrap">
-        ${fi?`<img class="cimg" src="${fi.url}" loading="lazy" onerror="this.parentElement.innerHTML='<div class=cph>${ty.emoji}</div>'">`:`<div class="cph">${ty.emoji}</div>`}
+        ${(()=>{const imgSrc=(p.snapshots&&p.snapshots[0])||p.snapshot||(fi&&fi.url)||'';return imgSrc?`<img class="cimg" src="${imgSrc}" loading="lazy" onerror="this.parentElement.innerHTML='<div class=cph>${ty.emoji}</div>'">`:`<div class="cph">${ty.emoji}</div>`;})()}
         <span class="badge ${bc}">${ty.emoji} ${bl}</span>
       </div>
       <div class="cbody">
