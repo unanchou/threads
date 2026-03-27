@@ -2185,7 +2185,29 @@ async function urlToBase64(imgUrl){
     }
   }catch(e){console.log('[Familyz] urlToBase64 fetch fail:', e.message);}
 
-  // 方法二：img + canvas（不帶 crossOrigin，讓圖片能顯示，但 toDataURL 可能 tainted）
+  // 方法二：proxy fetch（繞 CORS）
+  const proxyUrls=[
+    `https://corsproxy.io/?url=${encodeURIComponent(imgUrl)}`,
+    `https://api.allorigins.win/raw?url=${encodeURIComponent(imgUrl)}`,
+  ];
+  for(const pu of proxyUrls){
+    try{
+      const tout2=new Promise((_,rej)=>setTimeout(()=>rej(new Error('timeout')),10000));
+      const r=await Promise.race([fetch(pu),tout2]);
+      if(r.ok){
+        const blob=await r.blob();
+        if(blob.size>500&&blob.type.startsWith('image')){
+          const b64=await blobToBase64(blob);
+          if(b64&&b64.startsWith('data:image')){
+            console.log('[Familyz] urlToBase64 proxy ok:', pu);
+            return b64;
+          }
+        }
+      }
+    }catch(e){console.log('[Familyz] proxy img fail:', e.message);}
+  }
+
+  // 方法三：img + canvas（不帶 crossOrigin，讓圖片能顯示，但 toDataURL 可能 tainted）
   try{
     return await new Promise((res,rej)=>{
       const img=new Image();
@@ -3317,6 +3339,15 @@ $('f-date').value=todayStr();
 renderAll();
 initFormCollapse();
 gdInit(); // 嘗試自動登入 Google
+
+// 背景補存：有 ogUrl 但沒有 snapshots 的貼文，靜默重試
+setTimeout(async()=>{
+  const missing=posts.filter(p=>p.ogUrl&&!(p.snapshots||[]).length&&!p.snapshot);
+  for(const p of missing){
+    await tryAutoSnapshot(p.ogUrl, p.id);
+    await new Promise(r=>setTimeout(r,800)); // 避免同時打太多 proxy
+  }
+},3000);
 
 // 手機版
 if(window.innerWidth<=640){
