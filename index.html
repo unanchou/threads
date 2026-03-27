@@ -2122,8 +2122,16 @@ async function fetchOGImage(url, postId){
               ||txt.match(/<meta[^>]+name=["']twitter:image["'][^>]+content=["']([^"']+)["']/i)
               ||txt.match(/<meta[^>]+content=["']([^"']+)["'][^>]+name=["']twitter:image["']/i)
               ||txt.match(/"thumbnailUrl":"([^"]+)"/i)
-              ||txt.match(/"image":\{[^}]*"url":"([^"]+)"/i);
+              ||txt.match(/"image":\{[^}]*"url":"([^"]+)"/i)
+              ||txt.match(/content=["']([^"']*cdninstagram[^"']+)["'][^>]*og:image/i)
+              ||txt.match(/og:image[^>]*content=["']([^"']*cdninstagram[^"']+)["']/i)
+              ||txt.match(/"display_url":"([^"]+)"/i)
+              ||txt.match(/"media_url":"([^"]+)"/i);
       if(m&&m[1]){await _applyOGImage(m[1], postId);return;}
+      // debug: 顯示抓到的 HTML 裡有沒有圖片線索
+      const imgHint=txt.match(/cdninstagram[^\s"'<>]{10,}/)||txt.match(/fbcdn[^\s"'<>]{10,}/);
+      if(imgHint)console.log('[Familyz] found CDN hint but regex missed:', imgHint[0].slice(0,100));
+      else console.log('[Familyz] no image found in HTML, snippet:', txt.slice(0,300));
     }catch(e){console.log('[Familyz] proxy error:', e.message);}
   }
   console.log('[Familyz] all methods failed');
